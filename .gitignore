@@ -1,3 +1,44 @@
-**/appsettings.Development.json
-**/appsettings.*.json
-!**/appsettings.json
+# Build output
+bin/
+obj/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# Logs
+logs/
+*.log
+
+# Secretos y configuración local
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+!appsettings.json
+
+# Variables de entorno
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Migraciones generadas (opcional — algunos equipos sí las commitean)
+# src/SaaSify.Infrastructure/Persistence/Migrations/
+
+# Cobertura de tests
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
