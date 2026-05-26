@@ -42,3 +42,13 @@ coverage/
 *.coverage
 *.coveragexml
 TestResults/
+
+# .graphifyignore
+vendor/
+node_modules/
+dist/
+*.generated.py
+
+#Graphify out
+.github/
+graphify-out/
