@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SaaSify.Api/SaaSify.Api.csproj" />
+    <Project Path="src/SaaSify.Application/SaaSify.Application.csproj" />
+    <Project Path="src/SaaSify.Domain/SaaSify.Domain.csproj" />
+    <Project Path="src/SaaSify.Infrastructure/SaaSify.Infrastructure.csproj" />
+    <Project Path="src/SaaSify.Shared/SaaSify.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SaaSify.Tests.Integration/SaaSify.Tests.Integration.csproj" />
+    <Project Path="tests/SaaSify.Tests.Unit/SaaSify.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
