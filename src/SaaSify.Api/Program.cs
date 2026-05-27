@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using SaaSify.Application.Extensions;
+using SaaSify.Infrastructure.Extensions;
 using SaaSify.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,19 +14,29 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ── Base de datos ──────────────────────────────────────────────────────────
-// AddDbContext registra AppDbContext en el contenedor de DI.
-// UseNpgsql le dice a EF Core que use PostgreSQL como proveedor de base de datos.
-// La connection string viene del appsettings.json o appsettings.Development.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("Connection string 'DefaultConnection' not found in appsettings.");
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString)
-);
+// Se registran los servicios de Infrastructure (DbContext, repositorios).
+builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Se registran los servicios de Application (MediatR, validadores).
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
+
+// ── Migración automática en desarrollo ─────────────────────────────────────
+// Se aplican las migraciones pendientes al iniciar la aplicación.
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+}
 
 // ── Pipeline ───────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
