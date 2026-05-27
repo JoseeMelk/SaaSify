@@ -1,5 +1,37 @@
-# .graphifyignore
-vendor/
-node_modules/
-dist/
+# .graphifyignore - Graphify Ignore Patterns
+# Formato: glob patterns (uno por línea)
+
+# Build outputs - C#/.NET
+bin
+obj
+*.runtimeconfig.json
+*.csproj.nuget.dgspec.json
+*.csproj.nuget.g.props
+*.csproj.nuget.g.targets
+project.assets.json
+
+# Dependencies
+packages
+vendor
+node_modules
+
+# Generated
+dist
 *.generated.py
+
+# IDEs
+.vs
+.vscode
+*.sln.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VCS
+.git
+.gitignore
+
+# Test artifacts
+tests/*/bin
+tests/*/obj
