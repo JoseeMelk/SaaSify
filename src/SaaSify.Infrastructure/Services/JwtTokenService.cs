@@ -10,22 +10,22 @@ namespace SaaSify.Infrastructure.Services;
 /// <summary>
 /// Implementación de IJwtTokenService usando System.IdentityModel.Tokens.Jwt.
 /// 
-/// JWT (JSON Web Token) tiene tres partes:
-/// - Header: algoritmo de firma (HS256)
-/// - Payload: claims (userId, email, exp)
-/// - Signature: hash del header + payload con la clave secreta
+/// Dos tipos de tokens:
+/// - Access token: vida corta (15 min), token_type = "access"
+/// - Refresh token: vida larga (30 días), token_type = "refresh"
 /// 
-/// La clave secreta NUNCA viaja en el token.
-/// La firma garantiza que el token no fue modificado.
+/// El claim token_type permite distinguirlos y rechazar
+/// refresh tokens en endpoints que solo aceptan access tokens.
 /// </summary>
 public class JwtTokenService : IJwtTokenService
 {
     private readonly IConfiguration _configuration;
 
-    // Claims son los datos que se guardan dentro del token.
-    // Se usan constantes para evitar typos al leer/escribir.
     private const string UserIdClaim = "userId";
     private const string EmailClaim = "email";
+    private const string TokenTypeClaim = "token_type";
+    private const string AccessTokenType = "access";
+    private const string RefreshTokenType = "refresh";
 
     public JwtTokenService(IConfiguration configuration)
     {
@@ -33,13 +33,8 @@ public class JwtTokenService : IJwtTokenService
     }
 
     /// <summary>
-    /// Se genera un JWT access token con duración corta (15 min por defecto).
-    /// 
-    /// El token contiene:
-    /// - userId: para identificar al usuario sin ir a la BD
-    /// - email: para mostrar en la UI sin ir a la BD
-    /// - exp: fecha de expiración
-    /// - jti: ID único del token (para blacklist futura)
+    /// Se genera un JWT access token con token_type = "access".
+    /// Solo este tipo de token es aceptado en endpoints protegidos.
     /// </summary>
     public string GenerateAccessToken(Guid userId, string email, int expiresIn = 15)
     {
@@ -48,18 +43,17 @@ public class JwtTokenService : IJwtTokenService
             new SymmetricSecurityKey(secretKey),
             SecurityAlgorithms.HmacSha256);
 
-        // Se definen los claims que irán dentro del token.
         var claims = new[]
         {
             new Claim(UserIdClaim, userId.ToString()),
             new Claim(EmailClaim, email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // ID único del token
+            new Claim(TokenTypeClaim, AccessTokenType), // ← distingue access de refresh
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat,
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
-                ClaimValueTypes.Integer64) // fecha de emisión
+                ClaimValueTypes.Integer64)
         };
 
-        // Se construye el token con todos los parámetros.
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
@@ -67,15 +61,12 @@ public class JwtTokenService : IJwtTokenService
             expires: DateTime.UtcNow.AddMinutes(expiresIn),
             signingCredentials: signingCredentials);
 
-        // Se serializa el token a string (el formato: header.payload.signature)
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     /// <summary>
-    /// Se genera un refresh token con duración larga (30 días por defecto).
-    /// 
-    /// Es un JWT separado — tiene diferente tiempo de vida y diferente propósito.
-    /// Se usa SOLO para obtener nuevos access tokens.
+    /// Se genera un JWT refresh token con token_type = "refresh".
+    /// Solo se acepta en el endpoint /api/auth/refresh — en ningún otro.
     /// </summary>
     public string GenerateRefreshToken(Guid userId, int expiresInDays = 30)
     {
@@ -84,13 +75,11 @@ public class JwtTokenService : IJwtTokenService
             new SymmetricSecurityKey(secretKey),
             SecurityAlgorithms.HmacSha256);
 
-        // El refresh token solo incluye el userId — no necesita más datos.
         var claims = new[]
         {
             new Claim(UserIdClaim, userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            // Se marca como refresh token para distinguirlo del access token.
-            new Claim("token_type", "refresh")
+            new Claim(TokenTypeClaim, RefreshTokenType), // ← marca como refresh
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var token = new JwtSecurityToken(
@@ -103,10 +92,6 @@ public class JwtTokenService : IJwtTokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    /// <summary>
-    /// Se valida un JWT y se extraen los claims si es válido.
-    /// Devuelve null si el token es inválido o expirado.
-    /// </summary>
     public IDictionary<string, string>? ValidateAccessToken(string token)
     {
         var secretKey = GetSecretKey();
@@ -114,7 +99,6 @@ public class JwtTokenService : IJwtTokenService
 
         try
         {
-            // Se valida el token con los mismos parámetros con los que se generó.
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
@@ -123,25 +107,19 @@ public class JwtTokenService : IJwtTokenService
                 ValidIssuer = _configuration["Jwt:Issuer"],
                 ValidateAudience = true,
                 ValidAudience = _configuration["Jwt:Audience"],
-                ValidateLifetime = true, // se rechaza si ya expiró
-                ClockSkew = TimeSpan.Zero // sin tolerancia de tiempo
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
             }, out SecurityToken validatedToken);
 
-            // Se extraen los claims del token validado.
             var jwtToken = (JwtSecurityToken)validatedToken;
             return jwtToken.Claims.ToDictionary(c => c.Type, c => c.Value);
         }
         catch
         {
-            // Si la validación falla por cualquier razón, se devuelve null.
             return null;
         }
     }
 
-    /// <summary>
-    /// Se extrae el userId de un JWT válido.
-    /// Devuelve null si el token es inválido.
-    /// </summary>
     public Guid? GetUserIdFromToken(string token)
     {
         var claims = ValidateAccessToken(token);
@@ -155,10 +133,6 @@ public class JwtTokenService : IJwtTokenService
         return null;
     }
 
-    /// <summary>
-    /// Se obtiene la clave secreta desde la configuración.
-    /// La clave debe tener mínimo 32 caracteres (256 bits) para HS256.
-    /// </summary>
     private byte[] GetSecretKey()
     {
         var secret = _configuration["Jwt:Secret"]

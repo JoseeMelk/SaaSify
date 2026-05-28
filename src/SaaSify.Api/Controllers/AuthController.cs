@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SaaSify.Application.Features.Auth.Commands;
 using SaaSify.Application.Features.Auth.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SaaSify.Api.Controllers;
 
@@ -112,6 +113,7 @@ public class AuthController : ControllerBase
     /// La operación siempre devuelve 200 (es idempotente).
     /// </summary>
     [HttpPost("logout")]
+    [Authorize] 
     public async Task<IActionResult> Logout([FromBody] LogoutUserRequest request, CancellationToken cancellationToken)
     {
         var command = new LogoutUserCommand

@@ -8,20 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── Servicios ──────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
-
-// OpenAPI Nativo de .NET 10 (Reemplaza a AddSwaggerGen)
-// OpenAPI Nativo de .NET 10 (Sintaxis v2.x corregida sin advertencias de nulos)
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        // Forzamos la inicialización directa del contenedor
         if (document.Components is null)
-        {
             document.Components = new OpenApiComponents();
-        }
-        
-        // 1. Configuración del esquema de seguridad Bearer
+
         var scheme = new OpenApiSecurityScheme
         {
             Name = "Authorization",
@@ -29,27 +22,36 @@ builder.Services.AddOpenApi(options =>
             Scheme = "Bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Add JWT token, example: Bearer {token}"
+            Description = "Ingresa el access token. Ejemplo: Bearer eyJhbGci..."
         };
-        
-        // Ahora el compilador sabe con certeza absoluta que Components no es nulo
+
         document.Components.SecuritySchemes["Bearer"] = scheme;
-        
-        // 2. Aplicación del requisito de seguridad global con la nueva estructura .NET 10
+
         var requirement = new OpenApiSecurityRequirement
         {
             { new OpenApiSecuritySchemeReference("Bearer", document), new List<string>() }
         };
-        
+
         document.Security = new List<OpenApiSecurityRequirement> { requirement };
         return Task.CompletedTask;
     });
 });
 
-
 // ── Infrastructure + Application ──────────────────────────────────────────
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
+
+// ── Authorization policies ─────────────────────────────────────────────────
+// Se registra el handler que verifica el claim token_type.
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
+    SaaSify.Api.Authorization.AccessTokenRequirementHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    // Policy que solo acepta access tokens — rechaza refresh tokens.
+    options.AddPolicy(SaaSify.Api.Authorization.Policies.RequireAccessToken, policy =>
+        policy.Requirements.Add(new SaaSify.Api.Authorization.AccessTokenRequirement()));
+});
 
 var app = builder.Build();
 
@@ -61,19 +63,15 @@ if (app.Environment.IsDevelopment())
     await dbContext.Database.MigrateAsync();
 }
 
-// ── Pipeline de OpenAPI ────────────────────────────────────────────────────
+// ── Pipeline ───────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
-{
-    // Expone el JSON nativo de OpenAPI en: /openapi/v1.json (Reemplaza a UseSwagger)
-    app.MapOpenApi(); 
-}
+    app.MapOpenApi();
 
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
