@@ -8,7 +8,7 @@ public class CreatePlanCommandValidator : AbstractValidator<CreatePlanCommand>
     public CreatePlanCommandValidator()
     {
         RuleFor(x => x.OwnerId).NotEqual(Guid.Empty).WithMessage("OwnerId is invalid");
-        RuleFor(X => X.ProjectId).NotEqual(Guid.Empty).WithMessage("ProjectId is invalid");
+        RuleFor(x => x.ProjectId).NotEqual(Guid.Empty).WithMessage("ProjectId is invalid");
         RuleFor(x => x.Name).NotEmpty().WithMessage("Project name is required").MaximumLength(100).WithMessage("Project name must not exceed 100 characters");
         // El slug es opcional - si viene, se valida su formato.
         // Solo letras minusculas, numeros y guiones - sin espacios ni caracteres especiales
