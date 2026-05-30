@@ -96,12 +96,28 @@ public class Plan : Entity
             throw new BusinessRuleException("Cannot deactivate a plan with active subscriptions.");
 
         IsActive = false;
+        IsPublic = false;
         MarkAsUpdated();
     }
 
     public void Activate()
     {
         IsActive = true;
+        MarkAsUpdated();
+    }
+
+    public void MakePublic()
+    {
+        if (!IsActive)
+            throw new BusinessRuleException("Cannot make a plan public if it is not active.");
+
+        IsPublic = true;
+        MarkAsUpdated();
+    }
+
+    public void MakePrivate()
+    {
+        IsPublic = false;
         MarkAsUpdated();
     }
 }

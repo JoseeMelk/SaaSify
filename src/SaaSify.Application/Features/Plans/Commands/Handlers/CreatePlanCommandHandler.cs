@@ -58,8 +58,8 @@ public class CreatePlanCommandHandler : IRequestHandler<CreatePlanCommand, Resul
 
         // ── Paso 3: Generar slug desde el nombre si no viene ────────────
         var slug = string.IsNullOrWhiteSpace(request.Slug)
-            ? GenerateSlugFromName(request.Name)
-            : NormalizeSlug(request.Slug);
+            ? GenerateSlug(request.Name)
+            : request.Slug.Trim().ToLowerInvariant();
 
         // ── Paso 4: Verificar que el slug sea único en ese proyecto ─────
         // Se buscan planes en el mismo proyecto con el mismo slug
@@ -153,39 +153,27 @@ public class CreatePlanCommandHandler : IRequestHandler<CreatePlanCommand, Resul
     /// - Espacios múltiples se colapsan a un guión
     /// - Se eliminan caracteres especiales (solo letras, números, guiones)
     /// </summary>
-    private static string GenerateSlugFromName(string name)
-    {
-        // Convertir a minúsculas
-        var slug = name.ToLowerInvariant();
-
-        // Reemplazar espacios con guiones
-        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"\s+", "-");
-
-        // Eliminar caracteres especiales (solo mantener letras, números, guiones)
-        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9-]", "");
-
-        // Eliminar guiones consecutivos
-        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"-+", "-");
-
-        // Eliminar guiones al inicio y final
-        slug = slug.Trim('-');
-
-        return slug;
-    }
-
     /// <summary>
-    /// Normaliza un slug proporcionado por el usuario.
+    /// Se genera un slug URL-friendly desde el nombre del proyecto.
+    /// 
+    /// Pasos:
+    /// 1. Se convierte a minúsculas
+    /// 2. Se reemplazan espacios por guiones
+    /// 3. Se eliminan caracteres especiales
+    /// 4. Se eliminan guiones duplicados
+    /// 
+    /// Ejemplo: "Mi SaaS App v2!" → "mi-saas-app-v2"
     /// </summary>
-    private static string NormalizeSlug(string slug)
+    private static string GenerateSlug(string name)
     {
-        var normalized = slug.ToLowerInvariant().Trim();
-        
-        // Aplicar las mismas reglas que GenerateSlugFromName
-        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"\s+", "-");
-        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"[^a-z0-9-]", "");
-        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"-+", "-");
-        normalized = normalized.Trim('-');
-
-        return normalized;
+        var slug = name.Trim().ToLowerInvariant();
+ 
+        // Se reemplazan espacios y caracteres no alfanuméricos por guiones.
+        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\s-]", "");
+        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"\s+", "-");
+        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"-+", "-");
+ 
+        // Se eliminan guiones al inicio o final.
+        return slug.Trim('-');
     }
 }
