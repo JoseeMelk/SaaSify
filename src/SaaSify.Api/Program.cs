@@ -71,10 +71,9 @@ if (!app.Environment.IsDevelopment())
 
 // ApiKeyMiddleware debe ir antes de UseAuthentication.
 // Solo intercepta rutas /api/v1/entitlements — el resto pasa directo.
+app.UseMiddleware<GlobalExceptionMiddleware>(); // Middleware para expeciones globales
 app.UseMiddleware<ApiKeyMiddleware>();
 
-// Middleware para expeciones globales
-app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

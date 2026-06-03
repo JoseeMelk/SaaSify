@@ -28,11 +28,20 @@ public sealed class GlobalExceptionMiddleware
         }
         catch (ValidationException ex)
         {
-            await WriteErrorAsync(
-                context,
-                StatusCodes.Status400BadRequest,
-                ex.Message,
-                400);
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/json";
+
+            var errors = ex.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+
+            var response = new { error = "Validation failed", errors, errorCode = 400 };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            return;
         }
         catch (DomainException ex)
         {
@@ -70,7 +79,7 @@ public sealed class GlobalExceptionMiddleware
         HttpContext context,
         int statusCode,
         string error,
-        int errorCode,
+        int errorCode, // Quitarlo en un futuro por que es redundante, y usar directamente statusCode en la response
         Exception? exception = null)
     {
         context.Response.StatusCode = statusCode;
