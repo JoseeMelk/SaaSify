@@ -229,7 +229,7 @@ SaaSify.Shared         → Tipos compartidos, Results
 ### Setup
 
 ```bash
-git clone https://github.com/tu-usuario/saasify
+git clone https://github.com/JoseeMelk/SaaSify.git
 cd saasify
 
 # Configura tu connection string

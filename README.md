@@ -532,7 +532,7 @@ SaaSify.Shared        → Shared types, Results
 ### Setup
 
 ```bash
-git clone https://github.com/your-username/saasify
+git clone https://github.com/JoseeMelk/SaaSify.git
 cd saasify
 
 # Configure your connection string
