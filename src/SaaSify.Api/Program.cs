@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using SaaSify.Api.Middleware;
 using SaaSify.Application.Extensions;
 using SaaSify.Infrastructure.Extensions;
 using SaaSify.Infrastructure.Persistence;
@@ -42,13 +43,11 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 
 // ── Authorization policies ─────────────────────────────────────────────────
-// Se registra el handler que verifica el claim token_type.
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
     SaaSify.Api.Authorization.AccessTokenRequirementHandler>();
 
 builder.Services.AddAuthorization(options =>
 {
-    // Policy que solo acepta access tokens — rechaza refresh tokens.
     options.AddPolicy(SaaSify.Api.Authorization.Policies.RequireAccessToken, policy =>
         policy.Requirements.Add(new SaaSify.Api.Authorization.AccessTokenRequirement()));
 });
@@ -69,6 +68,10 @@ if (app.Environment.IsDevelopment())
 
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
+
+// ApiKeyMiddleware debe ir antes de UseAuthentication.
+// Solo intercepta rutas /api/v1/entitlements — el resto pasa directo.
+app.UseMiddleware<ApiKeyMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

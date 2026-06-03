@@ -36,4 +36,13 @@ public class PlanRepository : Repository<Plan>, IPlanRepository
         return await _context.Plans
             .AnyAsync(p => p.ProjectId == projectId && p.Slug == normalizedSlug, cancellationToken);
     }
+
+    // Se incluyen las features para que plan.HasFeature() funcione correctamente.
+    // Sin el Include, EF Core devuelve el plan con Features vacío.
+    public async Task<Plan?> GetByIdWithFeaturesAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Plans
+            .Include(p => p.Features)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+    }
 }
