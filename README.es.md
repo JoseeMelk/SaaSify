@@ -233,7 +233,7 @@ git clone https://github.com/JoseeMelk/SaaSify.git
 cd saasify
 
 # Configura tu connection string
-# Edita src/SaaSify.Api/appsettings.Development.json
+# Edita src/SaaSify.Api/appsettings.Development.json o appsettings.json
 
 dotnet restore
 dotnet build

@@ -536,7 +536,7 @@ git clone https://github.com/JoseeMelk/SaaSify.git
 cd saasify
 
 # Configure your connection string
-# Edit src/SaaSify.Api/appsettings.Development.json
+# Edit src/SaaSify.Api/appsettings.Development.json or appsettings.json
 
 dotnet restore
 dotnet build
