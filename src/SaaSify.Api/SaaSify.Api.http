@@ -1,6 +1,32 @@
-@SaaSify.Api_HostAddress = http://localhost:5138
+@host = http://localhost:5138
+@contentType = application/json
 
-GET {{SaaSify.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+# ════════════════════════════════════════════════════════════════════════════
+# PLANS API
+# ════════════════════════════════════════════════════════════════════════════
 
-###
+### Crear plan
+POST {{host}}/api/projects/550e8400-e29b-41d4-a716-446655440000/plans
+Content-Type: {{contentType}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIn0.PLACEHOLDER
+
+{
+  "name": "Pro Plan",
+  "slug": "pro-plan",
+  "price": 29.99,
+  "currency": "USD",
+  "billingCycle": "Monthly",
+  "isPublic": true
+}
+
+### Obtener plan por slug
+GET {{host}}/api/projects/550e8400-e29b-41d4-a716-446655440000/plans/pro-plan
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIn0.PLACEHOLDER
+
+### Listar planes del proyecto
+GET {{host}}/api/projects/550e8400-e29b-41d4-a716-446655440000/plans
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIn0.PLACEHOLDER
+
+### Desactivar plan
+POST {{host}}/api/projects/550e8400-e29b-41d4-a716-446655440000/plans/550e8400-e29b-41d4-a716-446655440001/deactivate
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIn0.PLACEHOLDER
