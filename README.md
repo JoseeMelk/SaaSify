@@ -460,7 +460,7 @@ GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
 - [x] JWT authentication + API key middleware
 - [x] Full subscription lifecycle
 - [x] Entitlement check
-- [ ] Global exception middleware
+- [x] Global exception middleware
 - [ ] Features management endpoints (add/remove features to plans via API)
 - [ ] Basic health checks
 

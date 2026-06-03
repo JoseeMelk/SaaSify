@@ -157,7 +157,7 @@ GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
 - [x] JWT + middleware de API key
 - [x] Ciclo de vida completo de suscripciones
 - [x] Entitlement check
-- [ ] Middleware global de excepciones
+- [x] Middleware global de excepciones
 - [ ] Endpoints de gestión de features (agregar/quitar features a planes via API)
 - [ ] Health checks básicos
 
