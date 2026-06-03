@@ -120,4 +120,13 @@ public class Plan : Entity
         IsPublic = false;
         MarkAsUpdated();
     }
+
+    public void RemoveFeature(Guid featureId)
+    {
+        var feature = _features.FirstOrDefault(f => f.Id == featureId)
+            ?? throw new NotFoundException(nameof(Feature), featureId);
+
+        _features.Remove(feature);
+        MarkAsUpdated();
+    }
 }

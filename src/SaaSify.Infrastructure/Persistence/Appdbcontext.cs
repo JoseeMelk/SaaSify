@@ -36,7 +36,7 @@ public class AppDbContext : DbContext, IUnitOfWork
         modelBuilder.Entity<User>().HasQueryFilter(u => u.DeletedAt == null);
         modelBuilder.Entity<Project>().HasQueryFilter(p => p.DeletedAt == null);
         modelBuilder.Entity<Plan>().HasQueryFilter(p => p.DeletedAt == null);
-        modelBuilder.Entity<Feature>().HasQueryFilter(f => f.DeletedAt == null);
+        //modelBuilder.Entity<Feature>().HasQueryFilter(f => f.DeletedAt == null);
         modelBuilder.Entity<Customer>().HasQueryFilter(c => c.DeletedAt == null);
         modelBuilder.Entity<Subscription>().HasQueryFilter(s => s.DeletedAt == null);
     }

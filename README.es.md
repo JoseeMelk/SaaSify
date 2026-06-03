@@ -125,7 +125,14 @@ GET    /api/projects/{projectId}/plans/{slug}
 POST   /api/projects/{projectId}/plans/{planId}/deactivate
 ```
 
-### Customers
+### Funcionalidades
+```
+POST   /api/projects/{projectId}/plans/{planId}/features
+GET    /api/projects/{projectId}/plans/{planSlug}/features
+DELETE /api/projects/{projectId}/plans/{planId}/features/{featureId}
+```
+
+### Customers o Clientes
 ```
 POST   /api/projects/{projectId}/customers
 GET    /api/projects/{projectId}/customers
@@ -140,7 +147,7 @@ POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/renew
 POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/cancel
 ```
 
-### Entitlements ⭐
+### Entitlements o Derechos de acceso⭐
 ```
 GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
        X-Api-Key: sk_live_...
@@ -158,7 +165,7 @@ GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
 - [x] Ciclo de vida completo de suscripciones
 - [x] Entitlement check
 - [x] Middleware global de excepciones
-- [ ] Endpoints de gestión de features (agregar/quitar features a planes via API)
+- [x] Endpoints de gestión de features (agregar/quitar features a planes via API)
 - [ ] Health checks básicos
 
 ### v2 — Estabilidad Operacional

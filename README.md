@@ -426,6 +426,13 @@ POST   /api/projects/{projectId}/plans
 GET    /api/projects/{projectId}/plans
 GET    /api/projects/{projectId}/plans/{slug}
 POST   /api/projects/{projectId}/plans/{planId}/deactivate
+
+```
+### Features
+```
+POST   /api/projects/{projectId}/plans/{planId}/features
+GET    /api/projects/{projectId}/plans/{planSlug}/features
+DELETE /api/projects/{projectId}/plans/{planId}/features/{featureId}
 ```
 
 ### Customers
@@ -461,7 +468,7 @@ GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
 - [x] Full subscription lifecycle
 - [x] Entitlement check
 - [x] Global exception middleware
-- [ ] Features management endpoints (add/remove features to plans via API)
+- [x] Features management endpoints (add/remove features to plans via API)
 - [ ] Basic health checks
 
 ### v2 — Stability & Operations

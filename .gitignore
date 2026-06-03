@@ -1,3 +1,6 @@
+# Other files
+001.*
+
 # Build output
 bin/
 obj/
