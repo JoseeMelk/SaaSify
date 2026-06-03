@@ -1,164 +1,23 @@
-# SaaSify — Subscription & Entitlement Infrastructure
+# SaaSify
 
-**Versión:** 0.1.0 MVP  
-**Estado:** En desarrollo — Architecture & Domain completado  
-**Última actualización:** Mayo 2025
+**Subscription & Entitlement Infrastructure for Modern SaaS**
 
----
-
-## Tabla de Contenidos
-
-1. [Visión y Filosofía](#visión-y-filosofía)
-2. [Problema que Resuelve](#problema-que-resuelve)
-3. [¿Qué NO es SaaSify?](#qué-no-es-saasify)
-4. [Público Objetivo](#público-objetivo)
-5. [MVP — Definición](#mvp--definición)
-6. [Arquitectura General](#arquitectura-general)
-7. [Los Dos Mundos](#los-dos-mundos)
-8. [Requerimientos Funcionales MVP](#requerimientos-funcionales-mvp)
-9. [Requerimientos No Funcionales](#requerimientos-no-funcionales)
-10. [Modelo de Datos](#modelo-de-datos)
-11. [Gestión de Suscripciones — Sin Cobrar](#gestión-de-suscripciones--sin-cobrar)
-12. [Multi-Tenancy](#multi-tenancy)
-13. [Stack Tecnológico](#stack-tecnológico)
-14. [Roadmap](#roadmap)
-15. [Modelo de Monetización](#modelo-de-monetización)
+> A side project built with curiosity and a lot of coffee. I'm a Laravel developer exploring the .NET ecosystem — doing my best to apply Clean Architecture principles while learning along the way.
 
 ---
 
-## Visión y Filosofía
+## What is SaaSify?
 
-### Misión
+SaaSify is an open-source platform that handles **subscription management and feature access control** for SaaS applications.
 
-**Convertirse en la infraestructura open-source de monetización para SaaS modernos.**
+Instead of building billing infrastructure from scratch, developers integrate SaaSify and get:
 
-Hacer que agregar planes, suscripciones y control de acceso a un SaaS tome **minutos, no semanas**.
+- Plan and subscription management
+- Feature access control (entitlements)
+- Customer lifecycle management
+- API key authentication for runtime checks
 
-### Principios Fundamentales
-
-#### 1. Developer First
-
-El sistema debe sentirse:
-- **Simple** — API intuitiva, sin sorpresas
-- **Limpio** — código mantenible y extensible
-- **Rápido de integrar** — 10 minutos desde cero a primera feature controlada
-- **Bien documentado** — cada decisión explicada
-- **Predecible** — sin comportamientos mágicos
-
-#### 2. API First
-
-- Todo debe poder hacerse mediante API REST
-- El dashboard web es secundario — decorativo
-- Los SDKs en otros lenguajes lo hacen más fácil, pero la API es lo fundamental
-
-#### 3. Open Core
-
-- El núcleo es open-source — hospedable en cualquier lado
-- La monetización viene del SaaS cloud y funcionalidades premium
-- Los clientes confían porque pueden auditar el código
-
-#### 4. Infrastructure, Not CRUD
-
-❌ **No somos** una pasarela de pago simple o un CRUD de suscripciones
-
-✅ **Somos** infraestructura — orquestamos el ciclo completo de monetización
-
-#### 5. Self-Host Friendly (Futuro)
-
-Eventualmente, el self-hosting será parte de la estrategia. Por ahora, el enfoque es el SaaS cloud.
-
-#### 6. LATAM Friendly
-
-- Integraciones con MercadoPago, transferencias locales
-- Soporte para múltiples monedas desde el día 1
-- No asumimos que todos usan Stripe
-
----
-
-## Problema que Resuelve
-
-### La Realidad del SaaS Indie
-
-Los desarrolladores **saben construir productos**. Lo que **no quieren hacer** es construir infraestructura de billing:
-
-**Problemas típicos:**
-- Gestión de planes y suscripciones
-- Control de acceso por plan
-- Cálculo de límites de uso
-- Renovación automática de períodos
-- Sincronización con proveedores de pago
-- Estados de pago y reintentos
-- Webhooks y notificaciones
-- Auditoría y cumplimiento normativo
-
-Todo eso consume **semanas de desarrollo**, es **propenso a bugs** y **difícil de mantener**.
-
-### La Solución
-
-SaaSify asume toda esa carga. El developer:
-
-1. Se registra en SaaSify
-2. Define sus planes
-3. Registra sus clientes
-4. Consulta una API para saber si pueden acceder a una feature
-5. El resto, SaaSify lo maneja
-
----
-
-## ¿Qué NO es SaaSify?
-
-### No Procesamos Pagos
-
-- ❌ No cobro tarjetas
-- ❌ No manejo PCI compliance
-- ❌ No gestiono reembolsos
-- ❌ No hago cumplimiento fiscal
-
-**¿Por qué?** Eso es trabajo de Stripe, MercadoPago, etc. Nosotros no competimos, complementamos.
-
-### No es una Pasarela de Pago
-
-SaaSify está un nivel arriba. Las pasarelas procesan dinero. Nosotros **gestionamos el acceso basado en lo que pagaron**.
-
-### No Reemplaza la Auth del Developer
-
-- El developer mantiene su propia autenticación
-- SaaSify solo sabe de sus usuarios por un ID externo (`externalId`)
-- Cero complejidad de SSO o migración
-
----
-
-## Público Objetivo
-
-### Primario (MVP enfocado aquí)
-
-- **Indie hackers** — desarrolladores individuales
-- **Micro SaaS** — startups con <50 clientes
-- **Early-stage startups** — equipo técnico, presupuesto limitado
-- **Equipos pequeños** — <5 developers
-
-### Secundario (Futuro)
-
-- **Agencias** — para vender SaaS a sus clientes
-- **Empresas pequeñas** — <100 empleados
-- **Productos internos** — para monetizar herramientas internas
-- **Plataformas multi-tenant** — que venden acceso a terceros
-
----
-
-## MVP — Definición
-
-### El Aha Moment (10 minutos)
-
-Un developer puede:
-
-1. **Minuto 1-2:** Crear cuenta en SaaSify
-2. **Minuto 3-5:** Definir sus planes (Free, Pro, Enterprise) con features
-3. **Minuto 6-7:** Registrar un cliente de prueba
-4. **Minuto 8-9:** Asignar el cliente a un plan
-5. **Minuto 10:** Una llamada API le dice si ese cliente puede acceder a una feature
-
-### Endpoint Central del MVP
+The idea is simple: **a developer should be able to protect a feature in their app with a single API call.**
 
 ```http
 GET /api/v1/entitlements/check?customerId=user_123&feature=export_csv
@@ -167,669 +26,582 @@ X-Api-Key: sk_live_...
 {
   "allowed": true,
   "plan": "pro",
-  "feature": "export_csv"
-}
-```
-
-Este endpoint es la fuente de verdad. Todo lo demás es infraestructura para que esta llamada sea posible.
-
-### Incluido en el MVP
-
-| Feature | Estado |
-|---------|--------|
-| Registro de developer | ✅ MVP |
-| Login con JWT | ✅ MVP |
-| Crear proyectos | ✅ MVP |
-| Generar API keys | ✅ MVP |
-| Definir planes | ✅ MVP |
-| Agregar features a planes | ✅ MVP |
-| Registrar customers | ✅ MVP |
-| Asignar suscripciones | ✅ MVP |
-| Entitlement check | ✅ MVP |
-| Dashboard básico | ✅ MVP |
-
-### Excluido del MVP (Fase 2+)
-
-| Feature | Fase |
-|---------|------|
-| Stripe / MercadoPago | v2 |
-| Webhooks | v2 |
-| Usage tracking | v2 |
-| Trials y expiración auto | v2 |
-| Límites numéricos (quotas) | v2 |
-| Analytics / MRR | v3 |
-| SDKs (.NET, JS, PHP) | v4 |
-| Cloud hosted SaaS | v5 |
-| Self-hosting (Docker) | Futuro |
-
----
-
-## Arquitectura General
-
-### Estilo Arquitectónico
-
-**Clean Architecture** con **Modular Monolith**
-
-```
-┌─────────────────────────────────────┐
-│         Presentación (Api)          │
-├─────────────────────────────────────┤
-│      Aplicación (Use Cases)         │
-├─────────────────────────────────────┤
-│   Dominio (Lógica de Negocio)       │
-├─────────────────────────────────────┤
-│    Infraestructura (EF Core, DB)    │
-└─────────────────────────────────────┘
-```
-
-### Principios Aplicados
-
-- **Separation of Concerns** — cada capa tiene una responsabilidad clara
-- **SOLID** — especialmente Dependency Inversion
-- **Domain-Driven Design** — el negocio está primero
-- **No Frameworks en el Domain** — puro C#
-
----
-
-## Los Dos Mundos
-
-SaaSify tiene **dos contextos completamente separados**:
-
-### Mundo A: Developer Setup (Una sola vez)
-
-El developer **configura su producto mediante API y consulta dashboard**:
-
-```
-Developer (Setup inicial)
-   ↓
-[SaaSify API] — Crear proyecto, planes, features
-   ↓
-[Dashboard web] — Ver estadísticas, gestionar excepciones
-
-Developer (Durante operación)
-   ↓
-[SaaS Backend del developer] — Crea customers via SaaSify API en masa
-```
-
-**SaaSify maneja:**
-- Registro y login del developer
-- Proyectos y API keys
-- Definición de planes
-- Definición de features por plan
-- **Creación de customers (programaticamente)**
-- **Asignación de suscripciones**
-
-### Mundo B: Customer Runtime
-
-Los usuarios finales del SaaS del developer **nunca tocan SaaSify**:
-
-```
-Customer (usuario final)
-   ↓
-[SaaS del developer] ← Consulta
-   ↓
-[SaaSify API] — ¿Puede acceder a X?
-   ↓
-[SaaS del developer] — Muestra/oculta feature
-```
-
-**Flujo:**
-1. El backend del developer recibe una request de su usuario
-2. Busca ese usuario en su base de datos
-3. Obtiene su ID (`user_123`)
-4. Llama a SaaSify: `GET /entitlements/check?customerId=user_123&feature=export`
-5. SaaSify devuelve `allowed: true/false`
-6. El backend del developer permite o bloquea la acción
-
-**Punto clave:** El developer maneja completamente la autenticación de sus usuarios. SaaSify solo sabe de ellos por un ID externo.
-
----
-
-## Requerimientos Funcionales MVP
-
-### Autenticación del Developer
-
-```
-POST /auth/register
-POST /auth/login
-POST /auth/refresh
-POST /auth/logout
-```
-
-- JWT con refresh tokens
-- Password hash con BCrypt
-- Recuperación de contraseña (fuera del MVP)
-
-### Proyectos
-
-```
-POST /projects
-GET /projects/{id}
-GET /projects
-PATCH /projects/{id}
-```
-
-Cada proyecto del developer es un universo separado de planes, clientes, suscripciones.
-
-### Planes
-
-```
-POST /projects/{projectId}/plans
-GET /projects/{projectId}/plans
-GET /projects/{projectId}/plans/{slug}
-PATCH /projects/{projectId}/plans/{id}
-DELETE /projects/{projectId}/plans/{id}
-```
-
-Planes: Free, Pro, Enterprise, etc. Cada uno con features y precio.
-
-### Features
-
-```
-POST /projects/{projectId}/plans/{planId}/features
-PATCH /projects/{projectId}/plans/{planId}/features/{id}
-DELETE /projects/{projectId}/plans/{planId}/features/{id}
-```
-
-Features: booleanas en el MVP (v2 agrega límites numéricos).
-
-### Customers — Creados por la API del Developer
-
-```
-POST /projects/{projectId}/customers
-  → Crea un customer nuevo con suscripción inicial al plan
-
-GET /projects/{projectId}/customers/{externalId}
-  → Obtiene un customer existente (para verificar estado)
-
-GET /projects/{projectId}/customers
-  → Lista todos los customers (para dashboard/analytics)
-
-PATCH /projects/{projectId}/customers/{customerId}
-  → Actualiza info del customer (email, name)
-```
-
-**Punto crítico:** Los customers se crean **programáticamente via API**, no manualmente en el dashboard.
-
-**Flujo típico:**
-1. Usuario se registra en el SaaS del developer
-2. Backend del developer llama: `POST /customers` con `externalId`, email, nombre y plan inicial
-3. SaaSify crea el customer y lo asigna al plan
-4. Devuelve el customer creado
-5. Listo — el usuario ya tiene acceso a sus features inmediatamente
-
-El `externalId` es el ID único del usuario en la base de datos del SaaS del developer. SaaSify no autentica a estos usuarios, solo los identifica y gestiona su acceso.
-
-### Subscripciones
-
-```
-POST /projects/{projectId}/customers/{customerId}/subscriptions
-GET /projects/{projectId}/customers/{customerId}/subscriptions
-POST /projects/{projectId}/customers/{customerId}/subscriptions/{id}/renew
-POST /projects/{projectId}/customers/{customerId}/subscriptions/{id}/cancel
-```
-
-Asignación de planes a customers y ciclo de vida.
-
-### El Endpoint Crítico: Entitlement Check
-
-```
-GET /api/v1/entitlements/check?customerId=user_123&feature=export_csv
-```
-
-**Respuesta:**
-```json
-{
-  "allowed": true,
-  "plan": "pro",
   "feature": "export_csv",
-  "expiresAt": "2025-06-26T14:30:00Z"
+  "expiresAt": "2025-07-01T00:00:00Z"
 }
 ```
 
-Este endpoint es consultado **miles de veces por segundo**. Debe ser:
-- **Rápido** — <10ms con cache
-- **Fiable** — nunca debe fallar
-- **Simple** — sin parámetros complejos
+---
+
+## What SaaSify is NOT
+
+- ❌ A payment gateway — we don't process money
+- ❌ A Stripe replacement — we complement it
+- ❌ A replacement for your app's auth system
+- ❌ A CRUD for payments
 
 ---
 
-## Requerimientos No Funcionales
+## How it Works
 
-### Escalabilidad
+SaaSify has two separate worlds:
 
-- Soportar 1000+ developers
-- Soportar 100k+ customers por developer
-- Miles de entitlement checks por segundo
-- Cache agresivo en Redis
+### World A — Developer Setup
+The developer registers their SaaS project, defines plans and features, and gets an API key.
 
-### Seguridad
+### World B — Customer Runtime
+When a user of the developer's app makes a request, the developer's backend calls SaaSify to check access. The user never interacts with SaaSify directly.
 
-- JWT seguro con expiración corta
-- API keys hasheadas (SHA-256)
-- Rate limiting por IP/API key
-- CORS configurado
-- SQL injection: prevenido por EF Core
-
-### Performance
-
-- Entitlement check <10ms
-- Índices en todas las búsquedas frecuentes
-- Connection pooling en PostgreSQL
-- Redis para cache de planes y features
-
-### Observabilidad
-
-- Logs estructurados con Serilog
-- Health checks
-- Tracing básico de requests
-- Métricas de uso por developer
-
-### Mantenibilidad
-
-- Clean Architecture
-- SOLID principles
-- Unit tests para lógica crítica
-- Integration tests para repositorios
-- Documentación API con Swagger
+```
+User makes request
+   ↓
+Developer's backend
+   ↓
+GET /api/v1/entitlements/check?customerId=user_123&feature=export_csv
+   ↓
+{ "allowed": true }
+   ↓
+Show or hide the feature
+```
 
 ---
 
-## Modelo de Datos
+## Current State — v1 (In Development)
 
-### 6 Entidades MVP
+### What's built
 
-#### 1. User
-```csharp
-Id: Guid (PK)
-Email: string (UNIQUE)
-PasswordHash: string
-Name: string
-Status: enum [Active, Suspended, Deleted]
-CreatedAt: DateTime
-UpdatedAt: DateTime?
-DeletedAt: DateTime?
-```
+| Feature | Status |
+|---------|--------|
+| Developer auth (JWT + refresh tokens) | ✅ Done |
+| Projects with API key generation | ✅ Done |
+| Plans with pricing and billing cycle | ✅ Done |
+| Feature flags per plan | ✅ Done |
+| Customer registration via API | ✅ Done |
+| Subscription assignment and lifecycle | ✅ Done |
+| Entitlement check endpoint | ✅ Done |
+| API key middleware for runtime auth | ✅ Done |
 
-El developer que se registra en SaaSify.
+### Subscription lifecycle
 
-#### 2. Project
-```csharp
-Id: Guid (PK)
-OwnerId: Guid (FK → User)
-Name: string
-Slug: string (UNIQUE)
-ApiKeyHash: string
-ApiKeyPrefix: string (UNIQUE)
-Status: enum [Active, Suspended]
-CreatedAt: DateTime
-UpdatedAt: DateTime?
-DeletedAt: DateTime?
-```
+SaaSify manages the subscription lifecycle without processing payments:
 
-El SaaS que el developer registra.
+- The developer charges their customer via Stripe, MercadoPago, or whatever they use
+- When payment succeeds, the developer notifies SaaSify: `POST /subscriptions/renew`
+- SaaSify updates `currentPeriodEnd` and `renewsAt`
+- The entitlement check verifies the period is still valid
 
-#### 3. Plan
-```csharp
-Id: Guid (PK)
-ProjectId: Guid (FK → Project)
-Name: string
-Slug: string (UNIQUE per project)
-Price: decimal?
-Currency: string?
-BillingCycle: enum [Monthly, Yearly]?
-IsActive: bool
-IsPublic: bool
-CreatedAt: DateTime
-UpdatedAt: DateTime?
-DeletedAt: DateTime?
-```
-
-Planes: Free, Pro, Enterprise, etc.
-
-#### 4. Feature
-```csharp
-Id: Guid (PK)
-PlanId: Guid (FK → Plan)
-Slug: string
-IsEnabled: bool
-CreatedAt: DateTime
-UpdatedAt: DateTime?
-DeletedAt: DateTime?
-```
-
-Features owned por Plan. No existen independientemente.
-
-#### 5. Customer
-```csharp
-Id: Guid (PK)
-ProjectId: Guid (FK → Project)
-ExternalId: string (unique per project)
-Email: string?
-Name: string?
-CreatedAt: DateTime
-UpdatedAt: DateTime?
-DeletedAt: DateTime?
-```
-
-Usuario final del SaaS del developer. SaaSify solo sabe su ID externo.
-
-#### 6. Subscription
-```csharp
-Id: Guid (PK)
-CustomerId: Guid (FK → Customer)
-PlanId: Guid (FK → Plan)
-Status: enum [Active, PastDue, Cancelled, Expired]
-BillingCycle: enum [Monthly, Yearly]
-PaymentMethod: enum? [Card, Transfer, Cash, Other]
-ExternalPaymentRef: string?
-StartedAt: DateTime
-CurrentPeriodStart: DateTime
-CurrentPeriodEnd: DateTime (← la fuente de verdad)
-RenewsAt: DateTime?
-CancelAtPeriodEnd: bool
-CancelledAt: DateTime?
-CreatedAt: DateTime
-UpdatedAt: DateTime?
-DeletedAt: DateTime?
-```
-
-Relación Customer ↔ Plan. El ciclo de vida de la suscripción.
-
-### Índices Críticos
-
-| Tabla | Índice | Tipo | Razón |
-|-------|--------|------|-------|
-| users | (email) | UNIQUE | Login rápido |
-| projects | (slug) | UNIQUE | Lookup por nombre |
-| projects | (api_key_prefix) | UNIQUE | Auth rápida |
-| plans | (project_id, slug) | UNIQUE | Feature lookup |
-| customers | (project_id, external_id) | UNIQUE | Búsqueda principal |
-| subscriptions | (customer_id) WHERE status='Active' | PARTIAL UNIQUE | Solo 1 activa por customer |
-| subscriptions | (current_period_end) | INDEX | Job de expiración |
+| Status | Entitlement Check |
+|--------|-------------------|
+| Active | ✅ Allowed |
+| PastDue | ❌ Blocked |
+| Cancelled | ❌ Blocked |
+| Expired | ❌ Blocked |
 
 ---
 
-## Gestión de Suscripciones — Sin Cobrar
+## API Reference
 
-### Lo que SaaSify Gestiona
-
-✅ Fechas de inicio y vencimiento  
-✅ Próxima fecha de renovación  
-✅ Duración del ciclo (mensual/anual)  
-✅ Método de pago registrado  
-✅ Estado de la suscripción  
-✅ Historial de renovaciones  
-
-### Lo que SaaSify NO Hace
-
-❌ Cobrar tarjetas  
-❌ Crear cargos en Stripe  
-❌ Emitir facturas  
-❌ Manejar reembolsos  
-❌ Reintentar pagos fallidos  
-❌ Cumplimiento fiscal/PCI  
-
-### El Flujo
-
-1. **Developer cobra al customer en su sistema** (Stripe, MercadoPago, efectivo)
-2. **Pago es exitoso**
-3. **Developer notifica a SaaSify:**
-   ```
-   POST /subscriptions/{id}/renew
-   {
-     "externalPaymentRef": "pi_stripe_abc123"
-   }
-   ```
-4. **SaaSify actualiza:**
-   - `CurrentPeriodStart` = hoy
-   - `CurrentPeriodEnd` = hoy + 1 mes (o 1 año)
-   - `RenewsAt` = nuevo `CurrentPeriodEnd`
-   - `Status` = Active
-5. **Background job cada noche:**
-   - Detecta suscripciones donde `CurrentPeriodEnd` < hoy
-   - Las marca como `PastDue` si no fueron renovadas
-
-### Estados de Suscripción
-
-| Estado | Significado | Entitlement Check |
-|--------|-------------|-------------------|
-| Active | Activa y vigente | ✅ Allowed |
-| PastDue | Venció pero dev no confirmó pago | ❌ Blocked |
-| Cancelled | Cancelada por el customer | ❌ Blocked |
-| Expired | Venció sin renovación | ❌ Blocked |
-
----
-
-## Multi-Tenancy
-
-### Estrategia: Shared Schema
-
-**Un solo PostgreSQL con columna `project_id` en cada tabla.**
-
+### Auth
 ```
-┌─────────────────────────────┐
-│      PostgreSQL             │
-├─────────────────────────────┤
-│ customers:                  │
-│  - id, project_id ← filter  │
-│  - external_id              │
-│  - ...                      │
-└─────────────────────────────┘
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
 ```
 
-### Global Query Filters (EF Core)
-
-```csharp
-// Automáticamente se inyecta en cada query
-WHERE project_id = {currentProjectId}
-AND deleted_at IS NULL
+### Projects
+```
+POST   /api/projects
+GET    /api/projects
+GET    /api/projects/{id}
+POST   /api/projects/{id}/rotate-api-key
 ```
 
-**Ventajas:**
-- Simple de implementar
-- Self-host fácil
-- Difícil de romper accidentalmente
-- Escalable hasta millones de records
-
-**Desventaja:**
-- Un bug de filtro expone datos de otro tenant
-- Aislamiento lógico, no físico
-
----
-
-## Stack Tecnológico
-
-### Backend
-
-| Componente | Tecnología | Razón |
-|------------|-----------|-------|
-| Framework | ASP.NET Core 10 | Moderno, performante, C# |
-| ORM | Entity Framework Core | Migrations, LINQ, productividad |
-| Database | PostgreSQL (managed) | Open-source, confiable, índices parciales |
-| Cache | Redis (managed) | Rápido, simple, en memoria |
-| Background Jobs | Hangfire | Reliable, persistente |
-| Validation | FluentValidation | Declarativo, reutilizable |
-| Logging | Serilog | Estructurado, múltiples sinks |
-| API Docs | Swagger/OpenAPI | Generado automáticamente |
-| Auth | JWT + Bearer | Stateless, escalable |
-| Deployment | Cloud managed (Heroku/Railway/Render) | Simplificado para MVP |
-
-### Arquitectura
-
-| Capa | Proyecto | Responsabilidad |
-|------|----------|-----------------|
-| Api | SaaSify.Api | Controllers, Middleware, HTTP |
-| Application | SaaSify.Application | Commands, Queries, Use Cases |
-| Domain | SaaSify.Domain | Entidades, Lógica de Negocio |
-| Infrastructure | SaaSify.Infrastructure | EF Core, Repositorios, Servicios |
-| Shared | SaaSify.Shared | DTOs, Results, Helpers |
-
-### Patrón de Aplicación
-
-**CQRS + MediatR**
-
+### Plans
 ```
-Request → Command/Query → Handler → Use Case → Repository → Response
+POST   /api/projects/{projectId}/plans
+GET    /api/projects/{projectId}/plans
+GET    /api/projects/{projectId}/plans/{slug}
+POST   /api/projects/{projectId}/plans/{planId}/deactivate
+```
+
+### Customers
+```
+POST   /api/projects/{projectId}/customers
+GET    /api/projects/{projectId}/customers
+GET    /api/projects/{projectId}/customers/{externalId}
+```
+
+### Subscriptions
+```
+GET    /api/projects/{projectId}/customers/{externalId}/subscriptions/active
+POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/assign
+POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/renew
+POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/cancel
+```
+
+### Entitlements ⭐
+```
+GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
+       X-Api-Key: sk_live_...
 ```
 
 ---
 
 ## Roadmap
 
-### Fase 1: Core Platform (MVP) ✅ En progreso
-
-- [x] Domain entities y lógica
+### v1 — Core Platform (Current)
+- [x] Domain entities with business logic
+- [x] Clean Architecture with CQRS + MediatR
 - [x] EF Core + PostgreSQL
-- [ ] Application commands/queries
-- [ ] API endpoints básicos
-- [ ] Dashboard web simple
-- [ ] Deploy a cloud (Heroku/Railway/similar)
+- [x] JWT authentication + API key middleware
+- [x] Full subscription lifecycle
+- [x] Entitlement check
+- [ ] Global exception middleware
+- [ ] Features management endpoints (add/remove features to plans via API)
+- [ ] Basic health checks
 
-### Fase 2: Entitlements & Advanced Features
+### v2 — Stability & Operations
+- [ ] Background job for subscription expiration (Hangfire)
+- [ ] Structured logging with Serilog
+- [ ] Rate limiting on entitlement check
+- [ ] Redis cache for entitlement check
+- [ ] Integration tests
 
-- [ ] Usage tracking
-- [ ] Límites numéricos (quotas)
-- [ ] Trials
-- [ ] Expiración automática
-- [ ] Webhooks
-- [ ] Email notifications
+### v3 — Developer Experience
+- [ ] Improved error messages
+- [ ] Request/response logging
+- [ ] API versioning
+- [ ] Basic usage metrics per project
 
-### Fase 3: Payment Providers
-
+### Further ahead
+- [ ] Webhooks (subscription_expired, payment_failed, etc.)
+- [ ] Trial periods
+- [ ] Numeric limits / quotas (max_seats: 10, api_calls: 1000)
+- [ ] MercadoPago integration (LATAM friendly)
 - [ ] Stripe integration
-- [ ] MercadoPago integration
-- [ ] Coinbase/cripto (stretch goal)
-
-### Fase 4: SDKs
-
-- [ ] .NET SDK
-- [ ] JavaScript/TypeScript SDK
-- [ ] PHP SDK
-
-### Fase 5: Self-Hosting (Futuro)
-
-- [ ] Docker Compose para desarrollo
-- [ ] Documentación de deployment en servidor propio
-- [ ] Scripts de migración
-- [ ] Guías de operación
 
 ---
 
-## Modelo de Monetización
+## Architecture
 
-### Filosofía: Open Source Primero
-
-SaaSify es **fundamentalmente open-source y siempre lo será**.
-
-El código está disponible públicamente. No hay features "cerradas" o secretas. Cualquiera puede auditar, fork, y self-hostear sin restricciones.
-
-### Estrategia (En Exploración)
-
-La monetización es **secundaria** a la misión de resolver el problema. Se explorará cuando haya producto estable y comunidad real.
-
-Opciones consideradas:
-
-#### 1. Cloud Hosting (Probable)
+**Clean Architecture** with a **Modular Monolith** approach.
 
 ```
-Self-hosted (Gratis):
-  ✅ Código completo
-  ✅ Sin límites
-  ✅ Control total
-  ❌ Administras todo (DB, backups, escala, seguridad)
-
-Cloud SaaS (Pago):
-  ✅ Zero-ops hosting
-  ✅ Backups automáticos
-  ✅ Monitoreo y alertas
-  ✅ Actualizaciones automáticas
-  ✅ 99.9% uptime SLA
+SaaSify.Api           → Controllers, Middleware, HTTP
+SaaSify.Application   → Commands, Queries, Handlers (CQRS + MediatR)
+SaaSify.Domain        → Entities, Business Logic (pure C#, no frameworks)
+SaaSify.Infrastructure → EF Core, Repositories, Services
+SaaSify.Shared        → Shared types, Results
 ```
 
-**Modelo freemium cloud:**
-- **Free:** 1 proyecto, 100 customers
-- **Pro:** $29/mes → 5 proyectos, 10k customers, advanced analytics
-- **Enterprise:** Custom → SSO, SLA 99.99%, on-premise, soporte dedicado
+### Key decisions
 
-**Lógica:** Los desarrolladores pagan por **no tener que pensar en infraestructura**, no por features.
+**Shared schema multi-tenancy** — all tables have a `project_id` column. EF Core Global Query Filters handle tenant isolation automatically.
 
-#### 2. Premium Features (Posible)
+**Entitlements are a derived query, not a table** — the check is: does this customer have an active subscription to a plan that has this feature enabled? No extra table needed.
 
-Analytics, dashboards, email automation, audit logs que mejoren UX.
-
-**Pero:** El código estará disponible. Un developer con self-hosted puede implementar lo mismo si lo necesita. No es un "lock-in".
-
-**Diferenciador:** UI polida, soporte, mantenimiento.
-
-#### 3. Professional Services (Futuro)
-
-- Integración con sistemas legacy
-- Consultoría de billing
-- Custom development
-- Training para equipos
+**API key authentication for runtime** — the entitlement check uses `X-Api-Key` instead of JWT because it's called from the developer's backend, not from a user session.
 
 ---
 
-### Lo que NO haremos
+## Tech Stack
 
-❌ **Nunca cerraremos features en open-source**
-
-El core de SaaSify (API, entitlements, suscripciones) será siempre gratis y open.
-
-❌ **Nunca habrá "nagware" o limitaciones artificiales**
-
-Si alguien self-hostea, tiene acceso a TODO sin interrupciones.
-
-❌ **Nunca dependeremos de "vendor lock-in"**
-
-Los datos del developer son suyos. Exportable. Migrables.
-
----
-
-### Timeline
-
-- **Ahora (Fase 1-2):** Construir producto sólido, ganar comunidad
-- **Después (Fase 3):** Versión cloud estable, considerar precios
-- **Largo plazo:** Modelo que soporte el proyecto sin comprometer valores
+| Component | Technology |
+|-----------|-----------|
+| Framework | ASP.NET Core 10 |
+| ORM | Entity Framework Core |
+| Database | PostgreSQL |
+| Auth | JWT + BCrypt + SHA-256 API keys |
+| Validation | FluentValidation |
+| Mediator | MediatR |
+| Logging | Serilog |
+| API Docs | OpenAPI (.NET 10 native) |
 
 ---
 
-### Por Qué Este Modelo Funciona
+## Getting Started
 
-Ejemplos reales de open-source que monetiza sin cerrar código:
+### Prerequisites
+- .NET 10 SDK
+- PostgreSQL (local or Docker container)
 
-| Proyecto | Modelo | Ingresos |
-|----------|--------|----------|
-| Supabase | Cloud hosting de Postgres | $M's/año |
-| GitLab | Cloud + Enterprise Services | $100M+/año |
-| Mattermost | Cloud + Self-hosted Enterprise | $M's/año |
-| Stripe (CLI) | Open-source, servicios API pagan | $10B+ valuación |
+### Setup
 
-**Patrón común:** El software es gratis, pero la **comodidad, escala y soporte** se pagan.
+```bash
+git clone https://github.com/your-username/saasify
+cd saasify
+
+# Configure your connection string
+# Edit src/SaaSify.Api/appsettings.Development.json
+
+dotnet restore
+dotnet build
+
+# Run migrations
+dotnet ef database update \
+  --project src/SaaSify.Infrastructure \
+  --startup-project src/SaaSify.Api
+
+# Start the API
+dotnet run --project src/SaaSify.Api
+```
+
+### Quick test
+
+```bash
+# Register a developer account
+POST http://localhost:5138/api/auth/register
+{
+  "email": "dev@example.com",
+  "password": "Secret123",
+  "name": "Dev"
+}
+
+# Create a project
+POST http://localhost:5138/api/projects
+Authorization: Bearer {accessToken}
+{
+  "name": "My SaaS"
+}
+# Save the apiKey from the response — it's shown only once
+
+# Create a plan
+POST http://localhost:5138/api/projects/{projectId}/plans
+Authorization: Bearer {accessToken}
+{
+  "name": "Pro",
+  "slug": "pro",
+  "price": 29.00,
+  "currency": "USD",
+  "billingCycle": "Monthly",
+  "isPublic": true
+}
+
+# Register a customer with a plan
+POST http://localhost:5138/api/projects/{projectId}/customers
+Authorization: Bearer {accessToken}
+{
+  "externalId": "user_001",
+  "planSlug": "pro"
+}
+
+# Check entitlement
+GET http://localhost:5138/api/v1/entitlements/check?customerId=user_001&feature=export_csv
+X-Api-Key: sk_live_...
+```
 
 ---
 
-### Compromiso con la Comunidad
+## Notes
 
-Si SaaSify escala y genera ingresos, estos se reinvertirán en:
+This is a personal side project. It's not production-ready yet. Things might break, APIs might change, and some features are still rough around the edges. Contributions, feedback, and issues are welcome.
 
-- Mantenimiento del código open-source
-- Mejoras de seguridad
-- Documentación
-- Soporte comunitario
-- Investigación de nuevas features
-
-SaaSify nunca será un proyecto abandonado que "extrae valor" sin reinvertir.
+Built with .NET 10, PostgreSQL, and a lot of learning.
 
 ---
 
-## Conclusión
+*Open-source. No strings attached.*# SaaSify
 
-SaaSify es **infraestructura, no una herramienta de pago**. Está diseñada para que los developers se enfoquen en su producto y nosotros manejemos la parte de "quién puede acceder a qué".
+**Subscription & Entitlement Infrastructure for Modern SaaS**
 
-**Éxito = un developer en 10 minutos tiene su primer entitlement check funcionando.**
+> A side project built with curiosity and a lot of coffee. I'm a Laravel developer exploring the .NET ecosystem — doing my best to apply Clean Architecture principles while learning along the way.
 
 ---
 
-*Documento de arquitectura y visión. Sujeto a cambios según feedback durante desarrollo.*
+## What is SaaSify?
+
+SaaSify is an open-source platform that handles **subscription management and feature access control** for SaaS applications.
+
+Instead of building billing infrastructure from scratch, developers integrate SaaSify and get:
+
+- Plan and subscription management
+- Feature access control (entitlements)
+- Customer lifecycle management
+- API key authentication for runtime checks
+
+The idea is simple: **a developer should be able to protect a feature in their app with a single API call.**
+
+```http
+GET /api/v1/entitlements/check?customerId=user_123&feature=export_csv
+X-Api-Key: sk_live_...
+
+{
+  "allowed": true,
+  "plan": "pro",
+  "feature": "export_csv",
+  "expiresAt": "2025-07-01T00:00:00Z"
+}
+```
+
+---
+
+## What SaaSify is NOT
+
+- ❌ A payment gateway — we don't process money
+- ❌ A Stripe replacement — we complement it
+- ❌ A replacement for your app's auth system
+- ❌ A CRUD for payments
+
+---
+
+## How it Works
+
+SaaSify has two separate worlds:
+
+### World A — Developer Setup
+The developer registers their SaaS project, defines plans and features, and gets an API key.
+
+### World B — Customer Runtime
+When a user of the developer's app makes a request, the developer's backend calls SaaSify to check access. The user never interacts with SaaSify directly.
+
+```
+User makes request
+   ↓
+Developer's backend
+   ↓
+GET /api/v1/entitlements/check?customerId=user_123&feature=export_csv
+   ↓
+{ "allowed": true }
+   ↓
+Show or hide the feature
+```
+
+---
+
+## Current State — v1 (In Development)
+
+### What's built
+
+| Feature | Status |
+|---------|--------|
+| Developer auth (JWT + refresh tokens) | ✅ Done |
+| Projects with API key generation | ✅ Done |
+| Plans with pricing and billing cycle | ✅ Done |
+| Feature flags per plan | ✅ Done |
+| Customer registration via API | ✅ Done |
+| Subscription assignment and lifecycle | ✅ Done |
+| Entitlement check endpoint | ✅ Done |
+| API key middleware for runtime auth | ✅ Done |
+
+### Subscription lifecycle
+
+SaaSify manages the subscription lifecycle without processing payments:
+
+- The developer charges their customer via Stripe, MercadoPago, or whatever they use
+- When payment succeeds, the developer notifies SaaSify: `POST /subscriptions/renew`
+- SaaSify updates `currentPeriodEnd` and `renewsAt`
+- The entitlement check verifies the period is still valid
+
+| Status | Entitlement Check |
+|--------|-------------------|
+| Active | ✅ Allowed |
+| PastDue | ❌ Blocked |
+| Cancelled | ❌ Blocked |
+| Expired | ❌ Blocked |
+
+---
+
+## API Reference
+
+### Auth
+```
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+```
+
+### Projects
+```
+POST   /api/projects
+GET    /api/projects
+GET    /api/projects/{id}
+POST   /api/projects/{id}/rotate-api-key
+```
+
+### Plans
+```
+POST   /api/projects/{projectId}/plans
+GET    /api/projects/{projectId}/plans
+GET    /api/projects/{projectId}/plans/{slug}
+POST   /api/projects/{projectId}/plans/{planId}/deactivate
+```
+
+### Customers
+```
+POST   /api/projects/{projectId}/customers
+GET    /api/projects/{projectId}/customers
+GET    /api/projects/{projectId}/customers/{externalId}
+```
+
+### Subscriptions
+```
+GET    /api/projects/{projectId}/customers/{externalId}/subscriptions/active
+POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/assign
+POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/renew
+POST   /api/projects/{projectId}/customers/{externalId}/subscriptions/cancel
+```
+
+### Entitlements ⭐
+```
+GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
+       X-Api-Key: sk_live_...
+```
+
+---
+
+## Roadmap
+
+### v1 — Core Platform (Current)
+- [x] Domain entities with business logic
+- [x] Clean Architecture with CQRS + MediatR
+- [x] EF Core + PostgreSQL
+- [x] JWT authentication + API key middleware
+- [x] Full subscription lifecycle
+- [x] Entitlement check
+- [ ] Global exception middleware
+- [ ] Features management endpoints (add/remove features to plans via API)
+- [ ] Basic health checks
+
+### v2 — Stability & Operations
+- [ ] Background job for subscription expiration (Hangfire)
+- [ ] Structured logging with Serilog
+- [ ] Rate limiting on entitlement check
+- [ ] Redis cache for entitlement check
+- [ ] Integration tests
+
+### v3 — Developer Experience
+- [ ] Improved error messages
+- [ ] Request/response logging
+- [ ] API versioning
+- [ ] Basic usage metrics per project
+
+### Further ahead
+- [ ] Webhooks (subscription_expired, payment_failed, etc.)
+- [ ] Trial periods
+- [ ] Numeric limits / quotas (max_seats: 10, api_calls: 1000)
+- [ ] MercadoPago integration (LATAM friendly)
+- [ ] Stripe integration
+
+---
+
+## Architecture
+
+**Clean Architecture** with a **Modular Monolith** approach.
+
+```
+SaaSify.Api           → Controllers, Middleware, HTTP
+SaaSify.Application   → Commands, Queries, Handlers (CQRS + MediatR)
+SaaSify.Domain        → Entities, Business Logic (pure C#, no frameworks)
+SaaSify.Infrastructure → EF Core, Repositories, Services
+SaaSify.Shared        → Shared types, Results
+```
+
+### Key decisions
+
+**Shared schema multi-tenancy** — all tables have a `project_id` column. EF Core Global Query Filters handle tenant isolation automatically.
+
+**Entitlements are a derived query, not a table** — the check is: does this customer have an active subscription to a plan that has this feature enabled? No extra table needed.
+
+**API key authentication for runtime** — the entitlement check uses `X-Api-Key` instead of JWT because it's called from the developer's backend, not from a user session.
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Framework | ASP.NET Core 10 |
+| ORM | Entity Framework Core |
+| Database | PostgreSQL |
+| Auth | JWT + BCrypt + SHA-256 API keys |
+| Validation | FluentValidation |
+| Mediator | MediatR |
+| Logging | Serilog |
+| API Docs | OpenAPI (.NET 10 native) |
+
+---
+
+## Getting Started
+
+### Prerequisites
+- .NET 10 SDK
+- PostgreSQL (local or Docker container)
+
+### Setup
+
+```bash
+git clone https://github.com/your-username/saasify
+cd saasify
+
+# Configure your connection string
+# Edit src/SaaSify.Api/appsettings.Development.json
+
+dotnet restore
+dotnet build
+
+# Run migrations
+dotnet ef database update \
+  --project src/SaaSify.Infrastructure \
+  --startup-project src/SaaSify.Api
+
+# Start the API
+dotnet run --project src/SaaSify.Api
+```
+
+### Quick test
+
+```bash
+# Register a developer account
+POST http://localhost:5138/api/auth/register
+{
+  "email": "dev@example.com",
+  "password": "Secret123",
+  "name": "Dev"
+}
+
+# Create a project
+POST http://localhost:5138/api/projects
+Authorization: Bearer {accessToken}
+{
+  "name": "My SaaS"
+}
+# Save the apiKey from the response — it's shown only once
+
+# Create a plan
+POST http://localhost:5138/api/projects/{projectId}/plans
+Authorization: Bearer {accessToken}
+{
+  "name": "Pro",
+  "slug": "pro",
+  "price": 29.00,
+  "currency": "USD",
+  "billingCycle": "Monthly",
+  "isPublic": true
+}
+
+# Register a customer with a plan
+POST http://localhost:5138/api/projects/{projectId}/customers
+Authorization: Bearer {accessToken}
+{
+  "externalId": "user_001",
+  "planSlug": "pro"
+}
+
+# Check entitlement
+GET http://localhost:5138/api/v1/entitlements/check?customerId=user_001&feature=export_csv
+X-Api-Key: sk_live_...
+```
+
+---
+
+## Notes
+
+This is a personal side project. It's not production-ready yet. Things might break, APIs might change, and some features are still rough around the edges. Contributions, feedback, and issues are welcome.
+
+Built with .NET 10, PostgreSQL, and a lot of learning.
+
+---
+
+*Open-source. No strings attached.*
