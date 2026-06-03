@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SaaSify.Api.Authorization;
+using SaaSify.Api.Extensions;
 using SaaSify.Application.Features.Projects.Commands;
 using SaaSify.Application.Features.Projects.Dtos;
 using SaaSify.Application.Features.Projects.Queries;
@@ -27,12 +28,6 @@ public class ProjectsController : ControllerBase
         _mediator = mediator;
     }
 
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("userId")?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateProjectRequest request,
@@ -40,7 +35,7 @@ public class ProjectsController : ControllerBase
     {
         var command = new CreateProjectCommand
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             Name = request.Name,
             Slug = request.Slug
         };
@@ -61,15 +56,12 @@ public class ProjectsController : ControllerBase
         var query = new GetProjectByIdQuery
         {
             ProjectId = id,
-            OwnerId = GetCurrentUserId()
+            OwnerId = User.GetUserId()
         };
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     [HttpGet]
@@ -77,15 +69,12 @@ public class ProjectsController : ControllerBase
     {
         var query = new ListProjectsQuery
         {
-            OwnerId = GetCurrentUserId()
+            OwnerId = User.GetUserId()
         };
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     [HttpPost("{id:guid}/rotate-api-key")]
@@ -96,14 +85,11 @@ public class ProjectsController : ControllerBase
         var command = new RotateApiKeyCommand
         {
             ProjectId = id,
-            OwnerId = GetCurrentUserId()
+            OwnerId = User.GetUserId()
         };
 
         var result = await _mediator.Send(command, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 }

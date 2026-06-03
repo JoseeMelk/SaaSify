@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SaaSify.Api.Extensions;
 using SaaSify.Application.Features.Entitlements.Queries;
 
 namespace SaaSify.Api.Controllers;
@@ -57,11 +58,8 @@ public class EntitlementsController : ControllerBase
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
         // Siempre 200 — el campo allowed indica si tiene acceso o no.
         // El developer nunca recibe 403 en este endpoint — solo true o false.
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 }

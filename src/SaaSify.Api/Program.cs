@@ -73,6 +73,9 @@ if (!app.Environment.IsDevelopment())
 // Solo intercepta rutas /api/v1/entitlements — el resto pasa directo.
 app.UseMiddleware<ApiKeyMiddleware>();
 
+// Middleware para expeciones globales
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SaaSify.Api.Authorization;
+using SaaSify.Api.Extensions;
 using SaaSify.Application.Features.Plans.Commands;
 using SaaSify.Application.Features.Plans.Dtos;
 using SaaSify.Application.Features.Plans.Queries;
@@ -27,12 +28,6 @@ public class PlansController : ControllerBase
         _mediator = mediator;
     }
 
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("userId")?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
     /// <summary>
     /// Crea un nuevo plan para el proyecto.
     /// 
@@ -46,7 +41,7 @@ public class PlansController : ControllerBase
     {
         var command = new CreatePlanCommand
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             Name = request.Name,
             Slug = request.Slug,
@@ -77,17 +72,14 @@ public class PlansController : ControllerBase
     {
         var query = new GetPlanBySlugQuery
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             Slug = slug
         };
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -102,16 +94,13 @@ public class PlansController : ControllerBase
     {
         var query = new ListPlansQuery
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId
         };
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -128,15 +117,12 @@ public class PlansController : ControllerBase
         var command = new DeactivatePlanCommand
         {
             Id = planId,
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId
         };
 
         var result = await _mediator.Send(command, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok();
+        return result.ToActionResult(this);
     }
 }

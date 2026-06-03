@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SaaSify.Api.Authorization;
+using SaaSify.Api.Extensions;
 using SaaSify.Application.Features.Subscriptions.Commands;
 using SaaSify.Application.Features.Subscriptions.Dtos;
 using SaaSify.Application.Features.Subscriptions.Queries;
@@ -20,12 +21,6 @@ public class SubscriptionsController : ControllerBase
         _mediator = mediator;
     }
 
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("userId")?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
     /// <summary>
     /// GET /api/projects/{projectId}/customers/{externalId}/subscriptions/active
     /// Obtiene la suscripción activa del customer.
@@ -38,17 +33,14 @@ public class SubscriptionsController : ControllerBase
     {
         var query = new GetActiveSubscriptionQuery
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             ExternalId = externalId
         };
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -65,7 +57,7 @@ public class SubscriptionsController : ControllerBase
     {
         var command = new AssignPlanCommand
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             ExternalId = externalId,
             PlanSlug = request.PlanSlug,
@@ -76,10 +68,7 @@ public class SubscriptionsController : ControllerBase
 
         var result = await _mediator.Send(command, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -96,7 +85,7 @@ public class SubscriptionsController : ControllerBase
     {
         var command = new RenewSubscriptionCommand
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             ExternalId = externalId,
             ExternalPaymentRef = request.ExternalPaymentRef
@@ -104,10 +93,7 @@ public class SubscriptionsController : ControllerBase
 
         var result = await _mediator.Send(command, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -125,7 +111,7 @@ public class SubscriptionsController : ControllerBase
     {
         var command = new CancelSubscriptionCommand
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             ExternalId = externalId,
             Immediately = request.Immediately
@@ -133,9 +119,6 @@ public class SubscriptionsController : ControllerBase
 
         var result = await _mediator.Send(command, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 }

@@ -5,6 +5,7 @@ using SaaSify.Api.Authorization;
 using SaaSify.Application.Features.Customers.Dtos;
 using SaaSify.Application.Features.Customers.Queries;
 using SaaSify.Application.Features.Customers.Commands;
+using SaaSify.Api.Extensions;
 
 namespace SaaSify.Api.Controllers;
 
@@ -20,12 +21,6 @@ public class CustomersController : ControllerBase
         _mediator = mediator;
     }
 
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("userId")?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
     [HttpPost]
     public async Task<IActionResult> Create(
     Guid projectId,               // minúscula — convención C#
@@ -34,7 +29,7 @@ public class CustomersController : ControllerBase
     {
         var command = new CreateCustomerCommand
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             ExternalId = request.ExternalId,
             Name = request.Name,
@@ -64,18 +59,15 @@ public class CustomersController : ControllerBase
     {
         var query = new GetCustomerByExternalIdQuery
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId,
             ExternalId = externalId
         };
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
         // 200 OK — devuelve CustomerResponse con ActiveSubscription incluida
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 
     [HttpGet]
@@ -85,16 +77,13 @@ public class CustomersController : ControllerBase
     {
         var query = new ListCustomersQuery
         {
-            OwnerId = GetCurrentUserId(),
+            OwnerId = User.GetUserId(),
             ProjectId = projectId
         };
 
         var result = await _mediator.Send(query, cancellationToken);
 
-        if (!result.IsSuccess)
-            return StatusCode(result.ErrorCode ?? 400, new { error = result.Error });
-
         // 200 OK — devuelve lista de CustomerListResponse (sin ActiveSubscription)
-        return Ok(result.Data);
+        return result.ToActionResult(this);
     }
 }
