@@ -1,3 +1,7 @@
+![.NET](https://img.shields.io/badge/.NET-10.0-purple)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 # SaaSify
 
 **Infraestructura de Suscripciones y Entitlements para SaaS Modernos**
