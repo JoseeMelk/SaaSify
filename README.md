@@ -161,9 +161,9 @@ GET    /api/v1/entitlements/check?customerId={id}&feature={slug}
 - [x] JWT authentication + API key middleware
 - [x] Full subscription lifecycle
 - [x] Entitlement check
-- [ ] Global exception middleware
-- [ ] Features management endpoints (add/remove features to plans via API)
-- [ ] Basic health checks
+- [x] Global exception middleware
+- [x] Features management endpoints (add/remove features to plans via API)
+- [x] Basic health checks
 
 ### v2 — Stability & Operations
 - [ ] Background job for subscription expiration (Hangfire)
